@@ -12,8 +12,9 @@
       />
     </div>
     <div id="content-wrapper">
-      <DisasterMap :selectedYear="selectedYear" />
-      <ForestCarbonPlot :selectedYear="selectedYear" />
+      <!-- <DisasterMap :selectedYear="selectedYear" />
+      <ForestCarbonPlot :selectedYear="selectedYear" /> -->
+      <CarbonDeforestationPlot :selectedYear="selectedYear" />
     </div>
   </div>
 </template>
@@ -22,6 +23,7 @@
 import { ref } from 'vue';
 import DisasterMap from './components/DisasterMap.vue';
 import ForestCarbonPlot from './components/ForestCarbonPlot.vue';
+import CarbonDeforestationPlot from './components/CarbonDeforestationPlot.vue';
 
 const selectedYear = ref(2023);
 </script>
