@@ -1,31 +1,32 @@
+<!-- src/components/YearSlider.vue -->
 <template>
-  <div>
-    <label for="range-year" class="form-label">Year Selection</label>
-    <input 
-      id="range-year" 
-      v-model="selectedYear" 
-      type="range" 
-      class="form-range" 
-      min="2006" 
-      max="2019" 
+  <div class="slider-container">
+    <input
+      type="range"
+      :min="1980"
+      :max="2023"
+      v-model.number="year"
+      @input="emitYearChange"
     />
-    <div class="mt-2">Selected Year: {{ selectedYear }}</div>
+    <p>Selected Year: {{ year }}</p>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useStore } from '@/stores/store.js'; // Adjust store path as needed
+import { ref } from 'vue';
 
-// Access the Pinia store
-const store = useStore();
+// Local year state
+const year = ref(1980);
 
-// Computed property for selectedYear, linked to Pinia state
-const selectedYear = computed({
-  get: () => store.selectedYear,
-  set: (val) => store.changeSelectedYear(val),
-});
+// Emit event to parent when the year changes
+const emit = defineEmits(['year-change']);
+const emitYearChange = () => {
+  emit('year-change', year.value);
+};
 </script>
 
-<style scoped>
+<style>
+.slider-container {
+  margin: 20px 0;
+}
 </style>
