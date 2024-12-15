@@ -1,7 +1,7 @@
 <template>
   <div id="forest-container">
     <h3>Forest Cover Change Over Time by Country (Year: {{ selectedYear }})</h3>
-    
+
     <div class="controls">
       <div class="country-selector-controls">
         <button @click="selectAllCountries">Select All</button>
@@ -30,8 +30,11 @@
 </template>
 
 <script setup>
-import { onMounted, watch, defineProps, ref } from 'vue';
+import { onMounted, watch, defineProps, ref, computed } from 'vue';
 import * as d3 from 'd3';
+import { useStore } from '@/stores/store'; // Adjust the path as needed
+
+const store = useStore();
 
 const props = defineProps({
   selectedYear: {
@@ -40,34 +43,22 @@ const props = defineProps({
   }
 });
 
-let forestData = [];
 const allCountries = ref([]);
 const selectedCountries = ref([]);
 
-// Load the forest and carbon data
-async function loadForestData() {
-  try {
-    forestData = await d3.csv('/public/13_Forest_and_Carbon.csv');
-    forestData = forestData.filter(d => d.Indicator === 'Forest area');
-    
-    // Extract unique countries and sort alphabetically
-    allCountries.value = [...new Set(forestData.map(d => d.Country))].sort();
-    
-    console.log('Loaded Forest Data:', forestData);
-  } catch (error) {
-    console.error('Error loading forest data:', error);
-  }
-}
+// Computed property to get forest data from the store
+const forestData = computed(() => store.getForestCarbon);
 
 // Select all countries
 function selectAllCountries() {
+  allCountries.value = [...new Set(forestData.value.map(d => d.Country))].sort();
   selectedCountries.value = [...allCountries.value];
 }
 
 // Deselect all countries and clear the plot
 function deselectAllCountries() {
   selectedCountries.value = [];
-  updateForestPlot(props.selectedYear); // Clear the plot by updating with no selected countries
+  updateForestPlot(props.selectedYear);
 }
 
 // Update the bar chart for the selected year and countries
@@ -87,7 +78,6 @@ function updateForestPlot(year) {
   // Create a tooltip div outside of the SVG
   let tooltip = d3.select('#forest-container').select('.tooltip');
 
-  // Create tooltip if it doesn't already exist
   if (tooltip.empty()) {
     tooltip = d3.select('#forest-container')
       .append('div')
@@ -103,8 +93,8 @@ function updateForestPlot(year) {
   }
 
   // Prepare the data for the selected year and countries
-  const filteredData = forestData
-    .filter(d => selectedCountries.value.includes(d.Country))
+  const filteredData = forestData.value
+    .filter(d => selectedCountries.value.includes(d.Country) && d.Indicator === 'Forest area')
     .map(d => ({
       Country: d.Country,
       Forest_Area: +d[year],
@@ -177,15 +167,7 @@ function updateForestPlot(year) {
     .attr('text-anchor', 'middle')
     .style('font-size', '18px')
     .text(`Forest Area in ${year}`);
-  
-  svg.append('text')
-    .attr('x', forestWidth / 2)
-    .attr('y', forestHeight + 40)
-    .attr('text-anchor', 'middle')
-    .text('Forest Area (1000 HA)');
 }
-
-
 
 // Watch for year changes and update the plot
 watch(() => props.selectedYear, (newYear) => {
@@ -197,8 +179,13 @@ watch(selectedCountries, () => {
   updateForestPlot(props.selectedYear);
 });
 
+// Load data when the component mounts
 onMounted(async () => {
-  await loadForestData();
+  if (store.getForestCarbon.length === 0) {
+    await store.loadData();
+  }
+  allCountries.value = [...new Set(forestData.value.map(d => d.Country))].sort();
+  updateForestPlot(props.selectedYear);
 });
 </script>
 
@@ -209,19 +196,16 @@ onMounted(async () => {
   text-align: center;
 }
 
-/* Controls Container */
 .controls {
   margin-bottom: 20px;
 }
 
-/* Buttons for Select All / Deselect All */
 .country-selector-controls button {
   margin: 0 10px;
   padding: 5px 10px;
   cursor: pointer;
 }
 
-/* Box for Checkboxes */
 .country-selector-box {
   border: 1px solid #ddd;
   border-radius: 5px;
@@ -232,21 +216,18 @@ onMounted(async () => {
   background-color: #f9f9f9;
 }
 
-/* Checkbox List */
 .country-selector {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* Individual Checkbox Label */
 .checkbox-label {
   display: flex;
   align-items: center;
   font-size: 14px;
 }
 
-/* Checkbox Input */
 .checkbox-label input {
   margin-right: 10px;
 }

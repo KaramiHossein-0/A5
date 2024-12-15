@@ -15,12 +15,10 @@ src/App.vue
 src/assets/base.css
 src/assets/logo.svg
 src/assets/us-states-geo.json
-src/components/BarChart.vue
 src/components/CarbonDeforestationPlot.vue
-src/components/ChoroplethMap.vue
+src/components/DisasterFrequencyPlot.vue
 src/components/DisasterMap.vue
 src/components/ForestCarbonPlot.vue
-src/components/Scatterplot.vue
 src/components/YearSlider.vue
 src/main.js
 src/stores/store.js
@@ -3273,39 +3271,34 @@ File: src/App.vue
     </div>
     <div id="content-wrapper">
       <!-- <DisasterMap :selectedYear="selectedYear" />
-      <ForestCarbonPlot :selectedYear="selectedYear" />
-      <CarbonDeforestationPlot :selectedYear="selectedYear" /> -->
-      
+      <ForestCarbonPlot :selectedYear="selectedYear" /> -->
+      <CarbonDeforestationPlot :selectedYear="selectedYear" />
+      <!-- <DisasterFrequencyPlot /> -->
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref } from 'vue';
 import DisasterMap from './components/DisasterMap.vue';
 import ForestCarbonPlot from './components/ForestCarbonPlot.vue';
 import CarbonDeforestationPlot from './components/CarbonDeforestationPlot.vue';
-
+import DisasterFrequencyPlot from '@/components/DisasterFrequencyPlot.vue';
 const selectedYear = ref(2023);
 </script>
-
 <style>
 #app {
   text-align: center;
   font-family: Arial, sans-serif;
 }
-
 #slider-container {
   margin: 20px;
 }
-
 #content-wrapper {
   display: flex;
   justify-content: space-around;
   flex-wrap: wrap;
   margin-top: 20px;
 }
-
 #content-wrapper > * {
   flex: 1;
   min-width: 600px;
@@ -3467,380 +3460,284 @@ File: src/assets/us-states-geo.json
 ]}
 
 ================
-File: src/components/BarChart.vue
+File: src/components/CarbonDeforestationPlot.vue
 ================
 <template>
-  <div class="vis-component" ref="chart">
-    <svg id="main-svg" :width="svgWidth" :height="svgHeight">
-      <g 
-        class="chart-group" 
-        :transform="`translate(${svgPadding.left}, ${svgPadding.top})`"
-      >
-        <!-- X Axis -->
-        <g class="axis axis-x" 
-          :transform="`translate(0, ${svgHeight - svgPadding.top - svgPadding.bottom})`">
-          <line :x1="0" :x2="svgWidth - svgPadding.left - svgPadding.right"/>
-          <g v-for="(d, i) in personaleIncome" :key="i">
-            <line :x1="xScale(d.state)" :x2="xScale(d.state)" y1="0" y2="6" />
-            <text 
-              :x="xScale(d.state) + xScale.bandwidth() / 2" 
-              y="13" 
-              text-anchor="end" 
-              :transform="`rotate(-90, ${xScale(d.state) + xScale.bandwidth() / 2}, 10)`" 
-            >
-              {{ d.state }}
-            </text>
-          </g>
-        </g>
-        
-        <!-- Y Axis -->
-        <g class="axis axis-y" ref="axisY">
-          <line :y2="svgHeight - svgPadding.top - svgPadding.bottom"/>
-          <g v-for="(value, index) in yTicks" :key="index">
-            <line :y1="yScale(value)" :y2="yScale(value)" x1="-6" x2="0"/>
-            <text x="-10" :y="isNaN(yScale(value)) ? 0 : yScale(value) + 5" text-anchor="end">
-              {{ value }}
-            </text>
-          </g>
-        </g>
-
-        <!-- Bars -->
-        <g class="bars-group">
-          <rect 
-            v-for="(d, i) in personaleIncome" 
-            :key="i"
-            class="bar"
-            :x="xScale(d.state)"
-            :y="yScale(d.value)"
-            :width="xScale.bandwidth()"
-            :height="svgHeight - svgPadding.top - svgPadding.bottom - yScale(d.value)"
-            @click="handleBarClick(d.state)"
-          />
-        </g>
-      </g>
-    </svg>
+  <div id="carbon-deforestation-container">
+    <h3>Carbon Sequestration vs. Deforestation Rate (Year: {{ selectedYear }})</h3>
+    <div id="scatter-plot-area"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import * as d3 from 'd3'; 
+import { onMounted, watch, defineProps } from 'vue';
 import { useStore } from '@/stores/store.js';
+import * as d3 from 'd3';
 
-// Access the Pinia store
 const store = useStore();
 
-// Reactive variables
-const svgWidth = ref(500);
-const svgHeight = ref(500);
-const svgPadding = { top: 25, right: 20, bottom: 120, left: 60 };
-const chart = ref(null); // Initialize chart reference
-
-// Computed properties for data and scales
-const personaleIncome = computed(() => store.filteredPersonaleIncome);
-const dataMax = computed(() => Math.max(d3.max(personaleIncome.value, d => d.value), 85000));
-const dataMin = computed(() => d3.min(personaleIncome.value, d => d.value));
-
-const xScale = computed(() => 
-  d3.scaleBand()
-    .range([0, svgWidth.value - svgPadding.left - svgPadding.right])
-    .padding(0.1)
-    .domain(personaleIncome.value.map(d => d.state))
-);
-
-const yScale = computed(() => 
-  d3.scaleLinear()
-    .range([svgHeight.value - svgPadding.top - svgPadding.bottom, 0])
-    .domain([dataMin.value > 0 ? 0 : dataMin.value, dataMax.value])
-);
-
-const yTicks = computed(() => {
-  const tickCount = 5; 
-  const step = (dataMax.value - (dataMin.value > 0 ? 0 : dataMin.value)) / tickCount;
-  return Array.from({ length: tickCount + 1 }, (_, i) => Math.round((dataMin.value > 0 ? 0 : dataMin.value) + step * i));
-});
-
-// Handle bar click
-const handleBarClick = (state) => {
-  store.changeSelectedState(state);
-};
-
-// Adjust the SVG width based on the chart's client width
-onMounted(() => {
-  // Access the chart element and update svgWidth
-  if (chart.value) {
-    svgWidth.value = chart.value.clientWidth;
+const props = defineProps({
+  selectedYear: {
+    type: Number,
+    required: true
   }
 });
+
+let forestAndCarbonData = [];
+let xScale, yScale, sizeScale, svg, xAxisGroup, yAxisGroup, pointsGroup, brushGroup;
+const width = 800;
+const height = 600;
+const margin = { top: 50, right: 50, bottom: 70, left: 90 };
+
+// Load the forest and carbon data
+async function loadForestAndCarbonData() {
+  try {
+    forestAndCarbonData = await store.getForestCarbon;
+    processAndDrawData(forestAndCarbonData, props.selectedYear);
+  } catch (error) {
+    console.error('Error loading data:', error);
+  }
+}
+
+// Process and draw the scatter plot
+function processAndDrawData(data, year) {
+  // Filter relevant indicators
+  const carbonData = data.filter(d => d.Indicator === 'Carbon stocks in forests');
+  const deforestationData = data.filter(d => d.Indicator === 'Forest area');
+
+  const years = d3.range(1980, 2024).map(String);
+
+  const carbonLong = carbonData.flatMap(d =>
+    years.map(year => ({
+      Country: d.Country,
+      ISO3: d.ISO3,
+      Year: parseInt(year),
+      Carbon_Stocks: +d[year] || null
+    }))
+  );
+
+  const deforestationLong = deforestationData.flatMap(d =>
+    years.map(year => ({
+      Country: d.Country,
+      ISO3: d.ISO3,
+      Year: parseInt(year),
+      Forest_Area: +d[year] || null
+    }))
+  );
+
+  // Merge carbon and deforestation data
+  const mergedData = [];
+  for (let c of carbonLong) {
+    const def = deforestationLong.find(d => d.Country === c.Country && d.Year === c.Year);
+    if (def && c.Carbon_Stocks !== null && def.Forest_Area !== null) {
+      mergedData.push({
+        ...c,
+        Forest_Area: def.Forest_Area
+      });
+    }
+  }
+
+  // Calculate deforestation rate (change in forest area over time)
+  mergedData.forEach((d, i, arr) => {
+    const prev = arr.find(p => p.Country === d.Country && p.Year === d.Year - 1);
+    d.Deforestation_Rate = prev ? d.Forest_Area - prev.Forest_Area : 0;
+  });
+
+  const filteredData = mergedData.filter(
+    (d) => d.Year === year && d.Deforestation_Rate !== null && d.Carbon_Stocks !== null
+  );
+
+  if (filteredData.length === 0) {
+    console.warn('No valid data points found for year:', year);
+    return;
+  }
+
+  drawScatterPlot(filteredData, year);
+}
+
+// Draw the scatter plot
+function drawScatterPlot(data, year) {
+  d3.select('#scatter-plot-area').selectAll('*').remove();
+
+  svg = d3.select('#scatter-plot-area')
+    .append('svg')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom)
+    .append('g')
+    .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+  const xDomain = d3.extent(data, d => d.Deforestation_Rate);
+  const yDomain = d3.extent(data, d => d.Carbon_Stocks);
+
+  xScale = d3.scaleLinear().domain(xDomain).nice().range([0, width]);
+  yScale = d3.scaleLinear().domain(yDomain).nice().range([height, 0]);
+
+  sizeScale = d3.scaleSqrt()
+    .domain([0, d3.max(data, d => d.Forest_Area)])
+    .range([4, 20]);
+
+  // Axes
+  xAxisGroup = svg.append('g')
+    .attr('transform', `translate(0, ${height})`)
+    .call(d3.axisBottom(xScale));
+
+  yAxisGroup = svg.append('g')
+    .call(d3.axisLeft(yScale));
+
+  // Tooltip
+  const tooltip = d3.select('#carbon-deforestation-container')
+    .append('div')
+    .attr('class', 'tooltip')
+    .style('position', 'absolute')
+    .style('opacity', 0)
+    .style('pointer-events', 'none')
+    .style('background', '#fff')
+    .style('border', '1px solid #000')
+    .style('padding', '5px')
+    .style('border-radius', '5px');
+
+  // Points
+  pointsGroup = svg.append('g').attr('class', 'points-group');
+
+  pointsGroup.selectAll('circle')
+    .data(data)
+    .enter()
+    .append('circle')
+    .attr('cx', d => xScale(d.Deforestation_Rate))
+    .attr('cy', d => yScale(d.Carbon_Stocks))
+    .attr('r', d => sizeScale(d.Forest_Area))
+    .attr('fill', 'steelblue')
+    .attr('opacity', 0.7)
+    .style('pointer-events', 'all')
+    .on('mouseover', (event, d) => {
+      tooltip.style('opacity', 1)
+        .html(`<strong>${d.Country}</strong><br>Deforestation Rate: ${d.Deforestation_Rate.toFixed(2)}<br>Carbon Stocks: ${d.Carbon_Stocks.toFixed(2)}<br>Forest Area: ${d.Forest_Area.toFixed(2)}`);
+      d3.select(event.currentTarget).attr('fill', 'orange');
+    })
+    .on('mousemove', (event) => {
+      tooltip.style('left', (event.pageX + 10) + 'px')
+        .style('top', (event.pageY - 20) + 'px');
+    })
+    .on('mouseout', (event) => {
+      tooltip.style('opacity', 0);
+      d3.select(event.currentTarget).attr('fill', 'steelblue');
+    });
+}
+
+watch(() => props.selectedYear, loadForestAndCarbonData);
+onMounted(loadForestAndCarbonData);
 </script>
 
 <style scoped>
-.bar {
-  fill: steelblue;
-}
-.bar:hover {
-  fill: lightblue;
-}
-.axis line {
-  stroke: black;
+.tooltip {
+  font-size: 12px;
+  background: white;
+  border: 1px solid black;
+  padding: 5px;
+  border-radius: 5px;
+  pointer-events: none;
+  z-index: 10;
 }
 </style>
 
 ================
-File: src/components/CarbonDeforestationPlot.vue
+File: src/components/DisasterFrequencyPlot.vue
 ================
 <template>
-    <div id="carbon-deforestation-container">
-      <h3>Carbon Sequestration vs. Deforestation Rate (Year: {{ selectedYear }})</h3>
-      <div id="scatter-plot-area"></div>
-    </div>
-  </template>
-  
-  <script setup>
-  import { onMounted, watch, defineProps } from 'vue';
-  import * as d3 from 'd3';
-  
-  const props = defineProps({
-    selectedYear: {
-      type: Number,
-      required: true
-    }
-  });
-  
-  let forestAndCarbonData = [];
-  let xScale, yScale, sizeScale, svg, xAxisGroup, yAxisGroup, pointsGroup, brushGroup;
-  const width = 800;
-  const height = 600;
-  const margin = { top: 50, right: 50, bottom: 70, left: 90 };
-  
-  // Load the forest and carbon data
-  async function loadForestAndCarbonData() {
-    try {
-      forestAndCarbonData = await d3.csv('/public/13_Forest_and_Carbon.csv');
-  
-      // Filter relevant indicators
-      const carbonData = forestAndCarbonData.filter(d => d.Indicator === 'Carbon stocks in forests');
-      const deforestationData = forestAndCarbonData.filter(d => d.Indicator === 'Forest area');
-  
-      // Melt the datasets to bring years into a single column
-      const years = d3.range(1992, 2023).map(String);
-  
-      const carbonLong = carbonData.flatMap(d =>
-        years.map(year => ({
-          Country: d.Country,
-          ISO3: d.ISO3,
-          Year: +year,
-          Carbon_Stocks: +d[year] || null
-        }))
-      );
-  
-      const deforestationLong = deforestationData.flatMap(d =>
-        years.map(year => ({
-          Country: d.Country,
-          ISO3: d.ISO3,
-          Year: +year,
-          Forest_Area: +d[year] || null
-        }))
-      );
-  
-      // Merge carbon and deforestation data
-      const mergedData = [];
-      for (let c of carbonLong) {
-        const def = deforestationLong.find(d => d.Country === c.Country && d.Year === c.Year);
-        if (def && c.Carbon_Stocks !== null && def.Forest_Area !== null) {
-          mergedData.push({
-            ...c,
-            Forest_Area: def.Forest_Area
-          });
-        }
-      }
-  
-      // Calculate deforestation rate (change in forest area over time)
-      mergedData.forEach((d, i, arr) => {
-        const prev = arr.find(p => p.Country === d.Country && p.Year === d.Year - 1);
-        d.Deforestation_Rate = prev ? d.Forest_Area - prev.Forest_Area : 0;
-      });
-  
-      drawScatterPlot(mergedData, props.selectedYear);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    }
-  }
-  
-  // Draw the scatter plot with brushable zoom and tooltips
-  function drawScatterPlot(data, year) {
-    d3.select('#scatter-plot-area').selectAll('*').remove();
-  
-    svg = d3.select('#scatter-plot-area')
-      .append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-      .append('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`);
-  
-    const filteredData = data.filter(d => d.Year === year && d.Deforestation_Rate !== null && d.Carbon_Stocks !== null);
-  
-    // Original scales
-    const xDomain = d3.extent(filteredData, d => d.Deforestation_Rate);
-    const yDomain = d3.extent(filteredData, d => d.Carbon_Stocks);
-  
-    xScale = d3.scaleLinear().domain(xDomain).nice().range([0, width]);
-    yScale = d3.scaleLinear().domain(yDomain).nice().range([height, 0]);
-  
-    sizeScale = d3.scaleSqrt()
-      .domain([0, d3.max(filteredData, d => d.Forest_Area)])
-      .range([4, 20]);
-  
-    // Axes
-    xAxisGroup = svg.append('g')
-      .attr('transform', `translate(0, ${height})`)
-      .call(d3.axisBottom(xScale));
-  
-    yAxisGroup = svg.append('g')
-      .call(d3.axisLeft(yScale));
-  
-    // Tooltip
-    const tooltip = d3.select('#carbon-deforestation-container')
-      .append('div')
-      .attr('class', 'tooltip')
-      .style('position', 'absolute')
-      .style('opacity', 0)
-      .style('pointer-events', 'none')
-      .style('background', '#fff')
-      .style('border', '1px solid #000')
-      .style('padding', '5px')
-      .style('border-radius', '5px');
-  
-    // Brush layer (append before points)
-    brushGroup = svg.append('g').attr('class', 'brush');
-  
-    // Points
-    pointsGroup = svg.append('g').attr('class', 'points-group');
-  
-    pointsGroup.selectAll('circle')
-      .data(filteredData)
-      .enter()
-      .append('circle')
-      .attr('cx', d => xScale(d.Deforestation_Rate))
-      .attr('cy', d => yScale(d.Carbon_Stocks))
-      .attr('r', d => sizeScale(d.Forest_Area))
-      .attr('fill', 'steelblue')
-      .attr('opacity', 0.7)
-      .style('pointer-events', 'all')
-      .on('mouseover', (event, d) => {
-        tooltip.style('opacity', 1)
-          .html(`<strong>${d.Country}</strong><br>Deforestation Rate: ${d.Deforestation_Rate.toFixed(2)}<br>Carbon Stocks: ${d.Carbon_Stocks.toFixed(2)}<br>Forest Area: ${d.Forest_Area.toFixed(2)}`);
-        d3.select(event.currentTarget).attr('fill', 'orange');
-      })
-      .on('mousemove', (event) => {
-        tooltip.style('left', (event.pageX + 10) + 'px')
-          .style('top', (event.pageY - 20) + 'px');
-      })
-      .on('mouseout', (event) => {
-        tooltip.style('opacity', 0);
-        d3.select(event.currentTarget).attr('fill', 'steelblue');
-      });
-  
-    const brush = d3.brush()
-      .extent([[0, 0], [width, height]])
-      .on('end', brushed);
-  
-    brushGroup.call(brush);
-  
-    function brushed(event) {
-      if (!event.selection) return;
-      const [[x0, y0], [x1, y1]] = event.selection;
-  
-      xScale.domain([xScale.invert(x0), xScale.invert(x1)]);
-      yScale.domain([yScale.invert(y1), yScale.invert(y0)]);
-  
-      xAxisGroup.transition().duration(500).call(d3.axisBottom(xScale));
-      yAxisGroup.transition().duration(500).call(d3.axisLeft(yScale));
-  
-      pointsGroup.selectAll('circle')
-        .transition().duration(500)
-        .attr('cx', d => xScale(d.Deforestation_Rate))
-        .attr('cy', d => yScale(d.Carbon_Stocks));
-  
-      brushGroup.call(brush.move, null);
-    }
-  
-    // Double-click to reset zoom
-    svg.on('dblclick', () => {
-      xScale.domain(xDomain);
-      yScale.domain(yDomain);
-  
-      xAxisGroup.transition().duration(500).call(d3.axisBottom(xScale));
-      yAxisGroup.transition().duration(500).call(d3.axisLeft(yScale));
-  
-      pointsGroup.selectAll('circle')
-        .transition().duration(500)
-        .attr('cx', d => xScale(d.Deforestation_Rate))
-        .attr('cy', d => yScale(d.Carbon_Stocks));
-    });
-  }
-  
-  watch(() => props.selectedYear, loadForestAndCarbonData);
-  onMounted(loadForestAndCarbonData);
-  </script>
-  
-  <style scoped>
-  .tooltip {
-    font-size: 12px;
-    background: white;
-    border: 1px solid black;
-    padding: 5px;
-    border-radius: 5px;
-    pointer-events: none;
-    z-index: 10;
-  }
-  </style>
-
-================
-File: src/components/ChoroplethMap.vue
-================
-<template>
-  <div class="vis-component" ref="chart">
-    <div>
-      <strong>Here comes the choropleth map</strong>.
-      <p>Selected states by clicking on the bar chart: {{ selectedStates }}</p>
-    </div>
-    <svg class="main-svg" :width="svgWidth" :height="svgHeight"></svg>
+  <div>
+    <h2>Climate-Related Disaster Frequency by Country (1980-2023)</h2>
+    <div ref="disasterChart"></div>
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useStore } from '@/stores/store.js';
-import mapStatesUSA from '@/assets/us-states-geo.json'; // Import the map data
+<script>
+import Plotly from 'plotly.js-dist';
+import * as d3 from 'd3';
 
-// Access the Pinia store
-const store = useStore();
+export default {
+  name: 'DisasterFrequencyPlot',
+  data() {
+    return {
+      disasterData: null,
+    };
+  },
+  mounted() {
+    this.loadAndRenderChart();
+  },
+  methods: {
+    async loadAndRenderChart() {
+      try {
+        // Load the CSV file
+        const data = await d3.csv('/public/14_Climate-related_Disasters_Frequency.csv');
 
-// Reactive data properties
-const svgWidth = ref(500);
-const svgHeight = ref(500);
-const svgPadding = {
-  top: 20,
-  right: 20,
-  bottom: 20,
-  left: 20,
+        // Filter data for "Climate related disasters frequency, Number of Disasters: TOTAL"
+        const totalDisasters = data.filter(
+          (d) => d.Indicator === 'Climate related disasters frequency, Number of Disasters: TOTAL'
+        );
+
+        // Reshape the dataset to bring year columns into a single column
+        const reshapedData = [];
+        totalDisasters.forEach((row) => {
+          Object.keys(row).forEach((key) => {
+            if (key.match(/^\d{4}$/) && row[key]) {
+              reshapedData.push({
+                Country: row.Country,
+                Year: parseInt(key, 10),
+                Disaster_Frequency: parseFloat(row[key]),
+              });
+            }
+          });
+        });
+
+        // Group data by country
+        const countries = {};
+        reshapedData.forEach((entry) => {
+          if (!countries[entry.Country]) {
+            countries[entry.Country] = { x: [], y: [], type: 'scatter', mode: 'lines', name: entry.Country };
+          }
+          countries[entry.Country].x.push(entry.Year);
+          countries[entry.Country].y.push(entry.Disaster_Frequency);
+        });
+
+        // Prepare the plot traces
+        const traces = Object.values(countries);
+
+        // Define layout with range slider and selectors
+        const layout = {
+          title: 'Climate-Related Disaster Frequency by Country (1980-2023)',
+          xaxis: {
+            title: 'Year',
+            rangeselector: {
+              buttons: [
+                { count: 5, label: 'Last 5 Years', step: 'year', stepmode: 'backward' },
+                { count: 10, label: 'Last 10 Years', step: 'year', stepmode: 'backward' },
+                { count: 20, label: 'Last 20 Years', step: 'year', stepmode: 'backward' },
+                { step: 'all', label: 'All Years' },
+              ],
+            },
+            rangeslider: { visible: true },
+          },
+          yaxis: {
+            title: 'Disaster Frequency',
+          },
+          template: 'plotly_white',
+        };
+
+        // Plot the chart
+        Plotly.newPlot(this.$refs.disasterChart, traces, layout);
+      } catch (error) {
+        console.error('Error loading or processing data:', error);
+      }
+    },
+  },
 };
-
-// Computed properties to get data from the Pinia store
-const personaleIncome = computed(() => store.personaleIncome);
-const baDegreeOrHigher = computed(() => store.baDegreeOrHigher);
-const selectedStates = computed(() => store.selectedStates);
-
-// onMounted hook for any D3 setup needed
-onMounted(() => {
-  console.log(mapStatesUSA); // Map geoJSON object for your projection
-  
-  // D3 setup or choropleth drawing logic would go here
-});
 </script>
 
 <style scoped>
+  div {
+    width: 100%;
+    height: 500px;
+  }
 </style>
 
 ================
@@ -3874,8 +3771,8 @@ File: src/components/DisasterMap.vue
   // Load the CSV and GeoJSON data
   async function loadData() {
     try {
-      disasterData = await d3.csv('/public/14_Climate-related_Disasters_Frequency.csv');
-      geoData = await d3.json('/public/ne_110m_admin_0_countries.geojson');
+      disasterData = await d3.csv('/14_Climate-related_Disasters_Frequency.csv');
+      geoData = await d3.json('/ne_110m_admin_0_countries.geojson');
       console.log('Data loaded:', disasterData, geoData);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -4308,48 +4205,6 @@ onMounted(async () => {
 </style>
 
 ================
-File: src/components/Scatterplot.vue
-================
-<template>
-  <div class="vis-component" ref="chart">
-    <div class="placeholder">
-      <strong>Here comes the scatterplot</strong>.
-    </div>
-    <svg class="main-svg" :width="svgWidth" :height="svgHeight">
-    </svg>
-  </div>
-</template>
-
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useStore } from '@/stores/store.js';
-
-// Access the Pinia store
-const store = useStore();
-
-// Define reactive properties for SVG dimensions
-const svgWidth = ref(500);
-const svgHeight = ref(500);
-const svgPadding = {
-  top: 20,
-  right: 20,
-  bottom: 20,
-  left: 20,
-};
-
-// Computed properties to get data from Pinia store
-const personaleIncome = computed(() => store.personaleIncome);
-const baDegreeOrHigher = computed(() => store.baDegreeOrHigher);
-
-onMounted(() => {
-  // D3 setup or drawing logic can go here
-});
-</script>
-
-<style scoped>
-</style>
-
-================
 File: src/components/YearSlider.vue
 ================
 <!-- src/components/YearSlider.vue -->
@@ -4412,17 +4267,20 @@ export const useStore = defineStore({
   state: () => ({
     selectedYear: 2006,
     selectedStates: [],
-    personaleIncome: [], // Original state property
-    baDegreeOrHigher: [],
+    forest_carbon: [],
+    climate_disaster: [],
+    geo: [],
   }),
+
   actions: {
     async loadData() {
-      const incomeData = await d3.csv('./usa_personal-income-by-state_2006-2019.csv');
-      const educationData = await d3.csv('./usa_ba-degree-or-higher_2006-2019.csv');
-      
-      // Assign data to state after loading
-      this.personaleIncome = incomeData;
-      this.baDegreeOrHigher = educationData;
+      const forest_carbon = await d3.csv('./13_Forest_and_Carbon.csv');
+      const climate_disaster = await d3.csv('./14_Climate-related_Disasters_Frequency.csv');
+      const geo = await d3.json('./ne_110m_admin_0_countries.geojson');
+
+      this.forest_carbon = forest_carbon;
+      this.climate_disaster = climate_disaster;
+      this.geo = geo;
     },
     changeSelectedYear(year) {
       this.selectedYear = year;
@@ -4431,25 +4289,12 @@ export const useStore = defineStore({
       this.selectedStates.push(state);
     },
   },
+
   getters: {
-    filteredPersonaleIncome(state) {
-      if (!state.personaleIncome) return []; // Guard clause to handle undefined
-      return state.personaleIncome
-        .filter(d => state.selectedYear in d)
-        .map(d => ({
-          state: d.State,
-          value: +d[state.selectedYear],
-        }));
-    },
-    filteredBaDegreeOrHigher(state) {
-      if (!state.baDegreeOrHigher) return []; // Guard clause to handle undefined
-      return state.baDegreeOrHigher
-        .filter(d => state.selectedYear in d)
-        .map(d => ({
-          state: d.State,
-          value: d[state.selectedYear],
-        }));
-    },
+    getSelectedYear: (state) => state.selectedYear,
+    getForestCarbon: (state) => state.forest_carbon,
+    getClimateDisaster: (state) => state.climate_disaster,
+    getGeoData: (state) => state.geo,
   },
 });
 
