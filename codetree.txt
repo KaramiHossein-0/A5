@@ -11,6 +11,7 @@ public/14_Climate-related_Disasters_Frequency.csv
 public/15_Climate-driven_INFORM_Risk.csv
 public/ne_110m_admin_0_countries.geojson
 README.md
+src/App_Nu.vue
 src/App.vue
 src/assets/base.css
 src/assets/logo.svg
@@ -3224,7 +3225,7 @@ File: README.md
 * Make sure you have Git, Node.js and npm installed on your machine
 * Clone this repository by typing into a terminal:
 ```
-git clone https://github.com/asilcetin/vis-vue-d3.git
+git clone https://github.com/KaramiHossein-0/A5.git
 ```
 * Go into into cloned directory by typing
 ```
@@ -3254,6 +3255,156 @@ npm run build
 See [Vite Configuration Reference](https://vite.dev/config/).
 
 ================
+File: src/App_Nu.vue
+================
+<template>
+    <div id="app" class="dashboard">
+      <header class="dashboard-header">
+        <h1>Climate Data Dashboard</h1>
+      </header>
+     
+      <div class="dashboard-grid">
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2>Global Disaster Map</h2>
+            <div class="year-selector">
+              <label for="disaster-map-year">Year: {{ sharedYear }}</label>
+              <input
+                type="range"
+                id="disaster-map-year"
+                min="1980"
+                max="2023"
+                v-model.number="sharedYear"
+              />
+            </div>
+          </div>
+          <DisasterMap :selectedYear="sharedYear" />
+        </div>
+       
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2>Forest Carbon Trends</h2>
+            <div class="year-selector">
+              <label for="forest-carbon-year">Year: {{ sharedYear }}</label>
+              <input
+                type="range"
+                id="forest-carbon-year"
+                min="1980"
+                max="2023"
+                v-model.number="sharedYear"
+              />
+            </div>
+          </div>
+          <ForestCarbonPlot :selectedYear="sharedYear" />
+        </div>
+       
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2>Carbon Deforestation Analysis</h2>
+            <div class="year-selector">
+              <label for="deforestation-year">Year: {{ sharedYear }}</label>
+              <input
+                type="range"
+                id="deforestation-year"
+                min="1980"
+                max="2023"
+                v-model.number="sharedYear"
+              />
+            </div>
+          </div>
+          <CarbonDeforestationPlot :selectedYear="sharedYear" />
+        </div>
+       
+        <div class="dashboard-card">
+          <h2>Disaster Frequency Overview</h2>
+          <DisasterFrequencyPlot />
+        </div>
+      </div>
+    </div>
+  </template>
+  
+  <script setup>
+  import { ref } from 'vue';
+  import DisasterMap from './components/DisasterMap.vue';
+  import ForestCarbonPlot from './components/ForestCarbonPlot.vue';
+  import CarbonDeforestationPlot from './components/CarbonDeforestationPlot.vue';
+  import DisasterFrequencyPlot from '@/components/DisasterFrequencyPlot.vue';
+  
+  const sharedYear = ref(2023);
+  </script>
+  
+  <style scoped>
+  .dashboard {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f4f6f9;
+    min-height: 100vh;
+  }
+  .dashboard-header {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  .dashboard-header h1 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+    text-align: center;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  .year-selector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .year-selector label {
+    font-weight: bold;
+    color: #34495e;
+    font-size: 0.9rem;
+  }
+  .year-selector input[type="range"] {
+    width: 150px;
+    accent-color: #3498db;
+  }
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .dashboard-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+  .dashboard-card:hover {
+    transform: translateY(-5px);
+  }
+  .dashboard-card h2 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+  }
+  @media (max-width: 1200px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  </style>
+
+================
 File: src/App.vue
 ================
 <template>
@@ -3270,10 +3421,10 @@ File: src/App.vue
       />
     </div>
     <div id="content-wrapper">
-      <!-- <DisasterMap :selectedYear="selectedYear" />
-      <ForestCarbonPlot :selectedYear="selectedYear" /> -->
+      <DisasterMap :selectedYear="selectedYear" />
+      <ForestCarbonPlot :selectedYear="selectedYear" />
       <CarbonDeforestationPlot :selectedYear="selectedYear" />
-      <!-- <DisasterFrequencyPlot /> -->
+      <DisasterFrequencyPlot />
     </div>
   </div>
 </template>
@@ -3470,48 +3621,39 @@ File: src/components/CarbonDeforestationPlot.vue
 </template>
 
 <script setup>
-import { onMounted, watch, defineProps } from 'vue';
-import { useStore } from '@/stores/store.js';
+import { onMounted, watch, computed } from 'vue';
 import * as d3 from 'd3';
+import { useStore } from '@/stores/store'; // Adjust the import path as needed
 
+// Use the store
 const store = useStore();
 
-const props = defineProps({
-  selectedYear: {
-    type: Number,
-    required: true
-  }
-});
+// Computed property for selected year from the store
+const selectedYear = computed(() => store.getSelectedYear);
 
-let forestAndCarbonData = [];
 let xScale, yScale, sizeScale, svg, xAxisGroup, yAxisGroup, pointsGroup, brushGroup;
 const width = 800;
 const height = 600;
 const margin = { top: 50, right: 50, bottom: 70, left: 90 };
 
-// Load the forest and carbon data
-async function loadForestAndCarbonData() {
-  try {
-    forestAndCarbonData = await store.getForestCarbon;
-    processAndDrawData(forestAndCarbonData, props.selectedYear);
-  } catch (error) {
-    console.error('Error loading data:', error);
-  }
-}
+// Data processing function
+function processForestAndCarbonData() {
+  const forestAndCarbonData = store.getForestCarbon;
+  
+  if (!forestAndCarbonData || forestAndCarbonData.length === 0) return [];
 
-// Process and draw the scatter plot
-function processAndDrawData(data, year) {
   // Filter relevant indicators
-  const carbonData = data.filter(d => d.Indicator === 'Carbon stocks in forests');
-  const deforestationData = data.filter(d => d.Indicator === 'Forest area');
+  const carbonData = forestAndCarbonData.filter(d => d.Indicator === 'Carbon stocks in forests');
+  const deforestationData = forestAndCarbonData.filter(d => d.Indicator === 'Forest area');
 
-  const years = d3.range(1980, 2024).map(String);
+  // Melt the datasets to bring years into a single column
+  const years = d3.range(1992, 2023).map(String);
 
   const carbonLong = carbonData.flatMap(d =>
     years.map(year => ({
       Country: d.Country,
       ISO3: d.ISO3,
-      Year: parseInt(year),
+      Year: +year,
       Carbon_Stocks: +d[year] || null
     }))
   );
@@ -3520,7 +3662,7 @@ function processAndDrawData(data, year) {
     years.map(year => ({
       Country: d.Country,
       ISO3: d.ISO3,
-      Year: parseInt(year),
+      Year: +year,
       Forest_Area: +d[year] || null
     }))
   );
@@ -3543,19 +3685,10 @@ function processAndDrawData(data, year) {
     d.Deforestation_Rate = prev ? d.Forest_Area - prev.Forest_Area : 0;
   });
 
-  const filteredData = mergedData.filter(
-    (d) => d.Year === year && d.Deforestation_Rate !== null && d.Carbon_Stocks !== null
-  );
-
-  if (filteredData.length === 0) {
-    console.warn('No valid data points found for year:', year);
-    return;
-  }
-
-  drawScatterPlot(filteredData, year);
+  return mergedData;
 }
 
-// Draw the scatter plot
+// Draw the scatter plot with brushable zoom and tooltips
 function drawScatterPlot(data, year) {
   d3.select('#scatter-plot-area').selectAll('*').remove();
 
@@ -3566,14 +3699,17 @@ function drawScatterPlot(data, year) {
     .append('g')
     .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-  const xDomain = d3.extent(data, d => d.Deforestation_Rate);
-  const yDomain = d3.extent(data, d => d.Carbon_Stocks);
+  const filteredData = data.filter(d => d.Year === year && d.Deforestation_Rate !== null && d.Carbon_Stocks !== null);
+
+  // Original scales
+  const xDomain = d3.extent(filteredData, d => d.Deforestation_Rate);
+  const yDomain = d3.extent(filteredData, d => d.Carbon_Stocks);
 
   xScale = d3.scaleLinear().domain(xDomain).nice().range([0, width]);
   yScale = d3.scaleLinear().domain(yDomain).nice().range([height, 0]);
 
   sizeScale = d3.scaleSqrt()
-    .domain([0, d3.max(data, d => d.Forest_Area)])
+    .domain([0, d3.max(filteredData, d => d.Forest_Area)])
     .range([4, 20]);
 
   // Axes
@@ -3596,11 +3732,14 @@ function drawScatterPlot(data, year) {
     .style('padding', '5px')
     .style('border-radius', '5px');
 
+  // Brush layer (append before points)
+  brushGroup = svg.append('g').attr('class', 'brush');
+
   // Points
   pointsGroup = svg.append('g').attr('class', 'points-group');
 
   pointsGroup.selectAll('circle')
-    .data(data)
+    .data(filteredData)
     .enter()
     .append('circle')
     .attr('cx', d => xScale(d.Deforestation_Rate))
@@ -3622,10 +3761,65 @@ function drawScatterPlot(data, year) {
       tooltip.style('opacity', 0);
       d3.select(event.currentTarget).attr('fill', 'steelblue');
     });
+
+  const brush = d3.brush()
+    .extent([[0, 0], [width, height]])
+    .on('end', brushed);
+
+  brushGroup.call(brush);
+
+  function brushed(event) {
+    if (!event.selection) return;
+    const [[x0, y0], [x1, y1]] = event.selection;
+
+    xScale.domain([xScale.invert(x0), xScale.invert(x1)]);
+    yScale.domain([yScale.invert(y1), yScale.invert(y0)]);
+
+    xAxisGroup.transition().duration(500).call(d3.axisBottom(xScale));
+    yAxisGroup.transition().duration(500).call(d3.axisLeft(yScale));
+
+    pointsGroup.selectAll('circle')
+      .transition().duration(500)
+      .attr('cx', d => xScale(d.Deforestation_Rate))
+      .attr('cy', d => yScale(d.Carbon_Stocks));
+
+    brushGroup.call(brush.move, null);
+  }
+
+  // Double-click to reset zoom
+  svg.on('dblclick', () => {
+    xScale.domain(xDomain);
+    yScale.domain(yDomain);
+
+    xAxisGroup.transition().duration(500).call(d3.axisBottom(xScale));
+    yAxisGroup.transition().duration(500).call(d3.axisLeft(yScale));
+
+    pointsGroup.selectAll('circle')
+      .transition().duration(500)
+      .attr('cx', d => xScale(d.Deforestation_Rate))
+      .attr('cy', d => yScale(d.Carbon_Stocks));
+  });
 }
 
-watch(() => props.selectedYear, loadForestAndCarbonData);
-onMounted(loadForestAndCarbonData);
+// Function to load and draw data
+function loadAndDrawData() {
+  const processedData = processForestAndCarbonData();
+  if (processedData.length > 0) {
+    drawScatterPlot(processedData, selectedYear.value);
+  }
+}
+
+// Watch for changes in selected year and forest carbon data
+watch([selectedYear, () => store.getForestCarbon], loadAndDrawData);
+
+// Initial data load
+onMounted(async () => {
+  // Ensure data is loaded from the store
+  if (store.getForestCarbon.length === 0) {
+    await store.loadData();
+  }
+  loadAndDrawData();
+});
 </script>
 
 <style scoped>
@@ -3650,302 +3844,304 @@ File: src/components/DisasterFrequencyPlot.vue
   </div>
 </template>
 
-<script>
+<script setup>
+import { onMounted, watch, ref, computed } from 'vue';
 import Plotly from 'plotly.js-dist';
-import * as d3 from 'd3';
+import { useStore } from '@/stores/store'; // Adjust the import path as needed
 
-export default {
-  name: 'DisasterFrequencyPlot',
-  data() {
-    return {
-      disasterData: null,
-    };
-  },
-  mounted() {
-    this.loadAndRenderChart();
-  },
-  methods: {
-    async loadAndRenderChart() {
-      try {
-        // Load the CSV file
-        const data = await d3.csv('/public/14_Climate-related_Disasters_Frequency.csv');
+// Use the store
+const store = useStore();
+const disasterChart = ref(null);
 
-        // Filter data for "Climate related disasters frequency, Number of Disasters: TOTAL"
-        const totalDisasters = data.filter(
-          (d) => d.Indicator === 'Climate related disasters frequency, Number of Disasters: TOTAL'
-        );
+// Computed property for disaster data from the store
+const disasterData = computed(() => store.getClimateDisaster);
 
-        // Reshape the dataset to bring year columns into a single column
-        const reshapedData = [];
-        totalDisasters.forEach((row) => {
-          Object.keys(row).forEach((key) => {
-            if (key.match(/^\d{4}$/) && row[key]) {
-              reshapedData.push({
-                Country: row.Country,
-                Year: parseInt(key, 10),
-                Disaster_Frequency: parseFloat(row[key]),
-              });
-            }
-          });
+// Function to process disaster data
+function processDisasterData() {
+  if (!disasterData.value || disasterData.value.length === 0) return [];
+
+  // Filter data for "Climate related disasters frequency, Number of Disasters: TOTAL"
+  const totalDisasters = disasterData.value.filter(
+    (d) => d.Indicator === 'Climate related disasters frequency, Number of Disasters: TOTAL'
+  );
+
+  // Reshape the dataset to bring year columns into a single column
+  const reshapedData = [];
+  totalDisasters.forEach((row) => {
+    Object.keys(row).forEach((key) => {
+      if (key.match(/^\d{4}$/) && row[key]) {
+        reshapedData.push({
+          Country: row.Country,
+          Year: parseInt(key, 10),
+          Disaster_Frequency: parseFloat(row[key]),
         });
-
-        // Group data by country
-        const countries = {};
-        reshapedData.forEach((entry) => {
-          if (!countries[entry.Country]) {
-            countries[entry.Country] = { x: [], y: [], type: 'scatter', mode: 'lines', name: entry.Country };
-          }
-          countries[entry.Country].x.push(entry.Year);
-          countries[entry.Country].y.push(entry.Disaster_Frequency);
-        });
-
-        // Prepare the plot traces
-        const traces = Object.values(countries);
-
-        // Define layout with range slider and selectors
-        const layout = {
-          title: 'Climate-Related Disaster Frequency by Country (1980-2023)',
-          xaxis: {
-            title: 'Year',
-            rangeselector: {
-              buttons: [
-                { count: 5, label: 'Last 5 Years', step: 'year', stepmode: 'backward' },
-                { count: 10, label: 'Last 10 Years', step: 'year', stepmode: 'backward' },
-                { count: 20, label: 'Last 20 Years', step: 'year', stepmode: 'backward' },
-                { step: 'all', label: 'All Years' },
-              ],
-            },
-            rangeslider: { visible: true },
-          },
-          yaxis: {
-            title: 'Disaster Frequency',
-          },
-          template: 'plotly_white',
-        };
-
-        // Plot the chart
-        Plotly.newPlot(this.$refs.disasterChart, traces, layout);
-      } catch (error) {
-        console.error('Error loading or processing data:', error);
       }
+    });
+  });
+
+  // Group data by country
+  const countries = {};
+  reshapedData.forEach((entry) => {
+    if (!countries[entry.Country]) {
+      countries[entry.Country] = { x: [], y: [], type: 'scatter', mode: 'lines', name: entry.Country };
+    }
+    countries[entry.Country].x.push(entry.Year);
+    countries[entry.Country].y.push(entry.Disaster_Frequency);
+  });
+
+  return Object.values(countries);
+}
+
+// Function to draw the Plotly chart
+function drawDisasterChart() {
+  const traces = processDisasterData();
+
+  if (traces.length === 0) {
+    console.warn('No disaster data available to plot.');
+    return;
+  }
+
+  const layout = {
+    title: 'Climate-Related Disaster Frequency by Country (1980-2023)',
+    xaxis: {
+      title: 'Year',
+      rangeselector: {
+        buttons: [
+          { count: 5, label: 'Last 5 Years', step: 'year', stepmode: 'backward' },
+          { count: 10, label: 'Last 10 Years', step: 'year', stepmode: 'backward' },
+          { count: 20, label: 'Last 20 Years', step: 'year', stepmode: 'backward' },
+          { step: 'all', label: 'All Years' },
+        ],
+      },
+      rangeslider: { visible: true },
     },
-  },
-};
+    yaxis: {
+      title: 'Disaster Frequency',
+    },
+    template: 'plotly_white',
+  };
+
+  Plotly.newPlot(disasterChart.value, traces, layout);
+}
+
+// Load and draw data when the component is mounted
+onMounted(async () => {
+  if (store.getClimateDisaster.length === 0) {
+    await store.loadData(); // Load data from the store if not already loaded
+  }
+  drawDisasterChart();
+});
+
+// Watch for changes in the disaster data and redraw the chart
+watch(disasterData, drawDisasterChart);
 </script>
 
 <style scoped>
-  div {
-    width: 100%;
-    height: 500px;
-  }
+div {
+  width: 100%;
+  height: 500px;
+}
 </style>
 
 ================
 File: src/components/DisasterMap.vue
 ================
 <template>
-    <div id="container">
-      <h2>Climate Related Disaster Frequency for {{ selectedYear }}</h2>
-      <div id="map-container"></div>
-      <div id="legend-container"></div>
-      <!-- Tooltip -->
-      <div id="tooltip"></div>
-    </div>
-  </template>
-  
-  <script setup>
-  import { onMounted, watch } from 'vue';
-  import * as d3 from 'd3';
-  
-  const props = defineProps({
-    selectedYear: Number
-  });
-  
-  let disasterData = [];
-  let geoData = {};
-  let svg, colorScale, projection, pathGenerator;
-  
-  const width = 600;  // Reduced width for the map
-  const height = 400; // Reduced height for the map
-  
-  // Load the CSV and GeoJSON data
-  async function loadData() {
-    try {
-      disasterData = await d3.csv('/14_Climate-related_Disasters_Frequency.csv');
-      geoData = await d3.json('/ne_110m_admin_0_countries.geojson');
-      console.log('Data loaded:', disasterData, geoData);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    }
+  <div id="container">
+    <h2>Climate Related Disaster Frequency for {{ selectedYear }}</h2>
+    <div id="map-container"></div>
+    <div id="legend-container"></div>
+    <!-- Tooltip -->
+    <div id="tooltip"></div>
+  </div>
+</template>
+
+<script setup>
+import { onMounted, watch, computed } from 'vue';
+import * as d3 from 'd3';
+import { useStore } from '@/stores/store'; // Adjust the import path as needed
+
+// Use the store
+const store = useStore();
+
+// Props for selected year
+const props = defineProps({
+  selectedYear: Number,
+});
+
+// Computed properties for disaster and geo data from the store
+const disasterData = computed(() => store.getClimateDisaster);
+const geoData = computed(() => store.getGeoData);
+
+let svg, colorScale, projection, pathGenerator;
+const width = 600;
+const height = 400;
+
+// Initialize the map
+function initializeMap() {
+  svg = d3.select('#map-container')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height);
+
+  projection = d3.geoEquirectangular()
+    .scale(100)
+    .translate([width / 2, height / 2]);
+
+  pathGenerator = d3.geoPath().projection(projection);
+
+  colorScale = d3.scaleSequentialLog(d3.interpolateViridis)
+    .domain([1, 100]); // Adjust domain based on your data range
+
+  createLegend();
+}
+
+// Update the map with disaster data for the selected year
+function updateMap(year) {
+  if (!disasterData.value.length || !geoData.value.features) {
+    console.warn('Data not available to update the map.');
+    return;
   }
-  
-  // Initialize the map
-  function initializeMap() {
-    svg = d3.select('#map-container')
-      .append('svg')
-      .attr('width', width)
-      .attr('height', height);
-  
-    projection = d3.geoEquirectangular()
-      .scale(100) // Adjusted scale for smaller size
-      .translate([width / 2, height / 2]);
-  
-    pathGenerator = d3.geoPath().projection(projection);
-  
-    colorScale = d3.scaleSequentialLog(d3.interpolateViridis)
-      .domain([1, 100]); // Adjust domain based on your data range
-  
-    // Create the legend after initializing the map
-    createLegend();
+
+  const yearData = disasterData.value
+    .filter(d => d.Indicator === 'Climate related disasters frequency, Number of Disasters: TOTAL')
+    .map(d => ({
+      iso3: d.ISO3,
+      frequency: +d[year] || 0,
+    }));
+
+  const tooltip = d3.select('#tooltip');
+
+  svg.selectAll('path')
+    .data(geoData.value.features)
+    .join('path')
+    .attr('d', pathGenerator)
+    .attr('fill', d => {
+      const countryData = yearData.find(c => c.iso3 === d.properties.ISO_A3);
+      return countryData && countryData.frequency > 0 ? colorScale(countryData.frequency) : '#ccc';
+    })
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 0.5)
+    .on('mouseover', (event, d) => {
+      const countryData = yearData.find(c => c.iso3 === d.properties.ISO_A3);
+      const frequency = countryData ? countryData.frequency : 'No data';
+
+      tooltip
+        .style('opacity', 1)
+        .html(`<strong>${d.properties.NAME}</strong><br>Disaster Frequency: ${frequency}`)
+        .style('left', `${event.pageX + 10}px`)
+        .style('top', `${event.pageY + 10}px`);
+    })
+    .on('mousemove', (event) => {
+      tooltip
+        .style('left', `${event.pageX + 10}px`)
+        .style('top', `${event.pageY + 10}px`);
+    })
+    .on('mouseout', () => {
+      tooltip.style('opacity', 0);
+    });
+}
+
+// Create the legend for the color scale
+function createLegend() {
+  const legendWidth = 300;
+  const legendHeight = 20;
+  const legendMargin = { top: 20, right: 10, bottom: 30, left: 10 };
+
+  const legendSvg = d3.select('#legend-container')
+    .append('svg')
+    .attr('width', legendWidth + legendMargin.left + legendMargin.right)
+    .attr('height', legendHeight + legendMargin.top + legendMargin.bottom)
+    .append('g')
+    .attr('transform', `translate(${legendMargin.left}, ${legendMargin.top})`);
+
+  const gradient = legendSvg.append('defs')
+    .append('linearGradient')
+    .attr('id', 'legend-gradient')
+    .attr('x1', '0%')
+    .attr('y1', '0%')
+    .attr('x2', '100%')
+    .attr('y2', '0%');
+
+  const gradientStops = d3.range(0, 1.1, 0.1);
+  gradient.selectAll('stop')
+    .data(gradientStops)
+    .enter()
+    .append('stop')
+    .attr('offset', d => `${d * 100}%`)
+    .attr('stop-color', d => d3.interpolateViridis(d));
+
+  legendSvg.append('rect')
+    .attr('width', legendWidth)
+    .attr('height', legendHeight)
+    .style('fill', 'url(#legend-gradient)');
+
+  const legendScale = d3.scaleLog()
+    .domain([1, 100])
+    .range([0, legendWidth]);
+
+  const legendAxis = d3.axisBottom(legendScale).ticks(5, '~g');
+
+  legendSvg.append('g')
+    .attr('transform', `translate(0, ${legendHeight + 5})`)
+    .call(legendAxis)
+    .selectAll('text')
+    .style('font-size', '12px');
+
+  legendSvg.append('text')
+    .attr('x', legendWidth / 2)
+    .attr('y', -5)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', '12px')
+    .attr('font-weight', 'bold')
+    .text('Number of Disasters');
+}
+
+// Watch for year changes and update the map
+watch(() => props.selectedYear, (newYear) => {
+  updateMap(newYear);
+});
+
+// Load data and initialize map on mount
+onMounted(async () => {
+  if (!store.getClimateDisaster.length || !store.getGeoData.length) {
+    await store.loadData();
   }
-  
-  // Update the map with hover functionality
-  function updateMap(year) {
-    console.log('Updating map for year:', year);
-  
-    const yearData = disasterData
-      .filter(d => d.Indicator === 'Climate related disasters frequency, Number of Disasters: TOTAL')
-      .map(d => ({
-        iso3: d.ISO3,
-        frequency: +d[year] || 0
-      }));
-  
-    // Tooltip setup
-    const tooltip = d3.select('#tooltip');
-  
-    svg.selectAll('path')
-      .data(geoData.features)
-      .join('path')
-      .attr('d', pathGenerator)
-      .attr('fill', d => {
-        const countryData = yearData.find(c => c.iso3 === d.properties.ISO_A3);
-        return countryData && countryData.frequency > 0 ? colorScale(countryData.frequency) : '#ccc';
-      })
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 0.5)
-      .on('mouseover', (event, d) => {
-        const countryData = yearData.find(c => c.iso3 === d.properties.ISO_A3);
-        const frequency = countryData ? countryData.frequency : 'No data';
-  
-        tooltip
-          .style('opacity', 1)
-          .html(`<strong>${d.properties.NAME}</strong><br>Disaster Frequency: ${frequency}`)
-          .style('left', `${event.pageX + 10}px`)
-          .style('top', `${event.pageY + 10}px`);
-      })
-      .on('mousemove', (event) => {
-        tooltip
-          .style('left', `${event.pageX + 10}px`)
-          .style('top', `${event.pageY + 10}px`);
-      })
-      .on('mouseout', () => {
-        tooltip.style('opacity', 0);
-      });
-  }
-  
-  // Create the horizontal legend for the color scale
-  function createLegend() {
-    const legendWidth = 300;
-    const legendHeight = 20;
-    const legendMargin = { top: 20, right: 10, bottom: 30, left: 10 };
-  
-    const legendSvg = d3.select('#legend-container')
-      .append('svg')
-      .attr('width', legendWidth + legendMargin.left + legendMargin.right)
-      .attr('height', legendHeight + legendMargin.top + legendMargin.bottom)
-      .append('g')
-      .attr('transform', `translate(${legendMargin.left}, ${legendMargin.top})`);
-  
-    // Define a gradient for the legend
-    const gradient = legendSvg.append('defs')
-      .append('linearGradient')
-      .attr('id', 'legend-gradient')
-      .attr('x1', '0%')
-      .attr('y1', '0%')
-      .attr('x2', '100%')
-      .attr('y2', '0%');
-  
-    // Create stops for the gradient using the Viridis color palette
-    const gradientStops = d3.range(0, 1.1, 0.1);
-    gradient.selectAll('stop')
-      .data(gradientStops)
-      .enter()
-      .append('stop')
-      .attr('offset', d => `${d * 100}%`)
-      .attr('stop-color', d => d3.interpolateViridis(d));
-  
-    // Draw the legend rectangle with the gradient
-    legendSvg.append('rect')
-      .attr('width', legendWidth)
-      .attr('height', legendHeight)
-      .style('fill', 'url(#legend-gradient)');
-  
-    // Add a scale for the legend
-    const legendScale = d3.scaleLog()
-      .domain([1, 100])
-      .range([0, legendWidth]);
-  
-    const legendAxis = d3.axisBottom(legendScale)
-      .ticks(5, '~g');
-  
-    legendSvg.append('g')
-      .attr('transform', `translate(0, ${legendHeight + 5})`)
-      .call(legendAxis)
-      .selectAll('text')
-      .style('font-size', '12px');
-  
-    legendSvg.append('text')
-      .attr('x', legendWidth / 2)
-      .attr('y', -5)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '12px')
-      .attr('font-weight', 'bold')
-      .text('Number of Disasters');
-  }
-  
-  // Watch for year changes and update the map
-  watch(() => props.selectedYear, (newYear) => {
-    updateMap(newYear);
-  });
-  
-  // Load data and initialize map on mount
-  onMounted(async () => {
-    await loadData();
-    initializeMap();
-    updateMap(props.selectedYear);
-  });
-  </script>
-  
-  <style>
-  #container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  #map-container {
-    width: 600px;
-    height: 400px;
-    margin-bottom: 20px;
-  }
-  
-  #legend-container {
-    width: 300px;
-  }
-  
-  #tooltip {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-  }
-  </style>
+  initializeMap();
+  updateMap(props.selectedYear);
+});
+</script>
+
+<style>
+#container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#map-container {
+  width: 600px;
+  height: 400px;
+  margin-bottom: 20px;
+}
+
+#legend-container {
+  width: 300px;
+}
+
+#tooltip {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+</style>
 
 ================
 File: src/components/ForestCarbonPlot.vue
@@ -3953,7 +4149,7 @@ File: src/components/ForestCarbonPlot.vue
 <template>
   <div id="forest-container">
     <h3>Forest Cover Change Over Time by Country (Year: {{ selectedYear }})</h3>
-    
+
     <div class="controls">
       <div class="country-selector-controls">
         <button @click="selectAllCountries">Select All</button>
@@ -3982,8 +4178,11 @@ File: src/components/ForestCarbonPlot.vue
 </template>
 
 <script setup>
-import { onMounted, watch, defineProps, ref } from 'vue';
+import { onMounted, watch, defineProps, ref, computed } from 'vue';
 import * as d3 from 'd3';
+import { useStore } from '@/stores/store'; // Adjust the path as needed
+
+const store = useStore();
 
 const props = defineProps({
   selectedYear: {
@@ -3992,34 +4191,22 @@ const props = defineProps({
   }
 });
 
-let forestData = [];
 const allCountries = ref([]);
 const selectedCountries = ref([]);
 
-// Load the forest and carbon data
-async function loadForestData() {
-  try {
-    forestData = await d3.csv('/public/13_Forest_and_Carbon.csv');
-    forestData = forestData.filter(d => d.Indicator === 'Forest area');
-    
-    // Extract unique countries and sort alphabetically
-    allCountries.value = [...new Set(forestData.map(d => d.Country))].sort();
-    
-    console.log('Loaded Forest Data:', forestData);
-  } catch (error) {
-    console.error('Error loading forest data:', error);
-  }
-}
+// Computed property to get forest data from the store
+const forestData = computed(() => store.getForestCarbon);
 
 // Select all countries
 function selectAllCountries() {
+  allCountries.value = [...new Set(forestData.value.map(d => d.Country))].sort();
   selectedCountries.value = [...allCountries.value];
 }
 
 // Deselect all countries and clear the plot
 function deselectAllCountries() {
   selectedCountries.value = [];
-  updateForestPlot(props.selectedYear); // Clear the plot by updating with no selected countries
+  updateForestPlot(props.selectedYear);
 }
 
 // Update the bar chart for the selected year and countries
@@ -4039,7 +4226,6 @@ function updateForestPlot(year) {
   // Create a tooltip div outside of the SVG
   let tooltip = d3.select('#forest-container').select('.tooltip');
 
-  // Create tooltip if it doesn't already exist
   if (tooltip.empty()) {
     tooltip = d3.select('#forest-container')
       .append('div')
@@ -4055,8 +4241,8 @@ function updateForestPlot(year) {
   }
 
   // Prepare the data for the selected year and countries
-  const filteredData = forestData
-    .filter(d => selectedCountries.value.includes(d.Country))
+  const filteredData = forestData.value
+    .filter(d => selectedCountries.value.includes(d.Country) && d.Indicator === 'Forest area')
     .map(d => ({
       Country: d.Country,
       Forest_Area: +d[year],
@@ -4129,15 +4315,7 @@ function updateForestPlot(year) {
     .attr('text-anchor', 'middle')
     .style('font-size', '18px')
     .text(`Forest Area in ${year}`);
-  
-  svg.append('text')
-    .attr('x', forestWidth / 2)
-    .attr('y', forestHeight + 40)
-    .attr('text-anchor', 'middle')
-    .text('Forest Area (1000 HA)');
 }
-
-
 
 // Watch for year changes and update the plot
 watch(() => props.selectedYear, (newYear) => {
@@ -4149,8 +4327,13 @@ watch(selectedCountries, () => {
   updateForestPlot(props.selectedYear);
 });
 
+// Load data when the component mounts
 onMounted(async () => {
-  await loadForestData();
+  if (store.getForestCarbon.length === 0) {
+    await store.loadData();
+  }
+  allCountries.value = [...new Set(forestData.value.map(d => d.Country))].sort();
+  updateForestPlot(props.selectedYear);
 });
 </script>
 
@@ -4161,19 +4344,16 @@ onMounted(async () => {
   text-align: center;
 }
 
-/* Controls Container */
 .controls {
   margin-bottom: 20px;
 }
 
-/* Buttons for Select All / Deselect All */
 .country-selector-controls button {
   margin: 0 10px;
   padding: 5px 10px;
   cursor: pointer;
 }
 
-/* Box for Checkboxes */
 .country-selector-box {
   border: 1px solid #ddd;
   border-radius: 5px;
@@ -4184,21 +4364,18 @@ onMounted(async () => {
   background-color: #f9f9f9;
 }
 
-/* Checkbox List */
 .country-selector {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* Individual Checkbox Label */
 .checkbox-label {
   display: flex;
   align-items: center;
   font-size: 14px;
 }
 
-/* Checkbox Input */
 .checkbox-label input {
   margin-right: 10px;
 }
@@ -4285,9 +4462,9 @@ export const useStore = defineStore({
     changeSelectedYear(year) {
       this.selectedYear = year;
     },
-    changeSelectedState(state) {
-      this.selectedStates.push(state);
-    },
+    // changeSelectedState(state) {
+    //   this.selectedStates.push(state);
+    // },
   },
 
   getters: {

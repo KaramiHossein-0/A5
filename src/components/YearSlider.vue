@@ -1,4 +1,3 @@
-<!-- src/components/YearSlider.vue -->
 <template>
   <div class="slider-container">
     <input

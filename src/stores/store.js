@@ -36,3 +36,4 @@ export const useStore = defineStore({
     getGeoData: (state) => state.geo,
   },
 });
+
