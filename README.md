@@ -2,7 +2,7 @@
 * Make sure you have Git, Node.js and npm installed on your machine
 * Clone this repository by typing into a terminal:
 ```
-git clone https://github.com/asilcetin/vis-vue-d3.git
+git clone https://github.com/KaramiHossein-0/A5.git
 ```
 * Go into into cloned directory by typing
 ```
