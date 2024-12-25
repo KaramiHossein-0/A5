@@ -100,6 +100,22 @@ function drawScatterPlot(data, year) {
   yAxisGroup = svg.append('g')
     .call(d3.axisLeft(yScale));
 
+  // Add axis labels
+  svg.append('text')
+    .attr('class', 'x-axis-label')
+    .attr('text-anchor', 'middle')
+    .attr('x', width / 2)
+    .attr('y', height + margin.bottom - 10)
+    .text('Deforestation Rate');
+
+  svg.append('text')
+    .attr('class', 'y-axis-label')
+    .attr('text-anchor', 'middle')
+    .attr('x', -height / 2)
+    .attr('y', -margin.left + 20)
+    .attr('transform', 'rotate(-90)')
+    .text('Carbon Stocks');
+
   const tooltip = d3.select('#scatter-plot-area')
     .append('div')
     .attr('class', 'tooltip')

@@ -32,7 +32,7 @@
 <script setup>
 import { onMounted, watch, defineProps, ref, computed } from 'vue';
 import * as d3 from 'd3';
-import { useStore } from '@/stores/store'; // Adjust the path as needed
+import { useStore } from '@/stores/store';
 
 const store = useStore();
 
@@ -45,23 +45,18 @@ const props = defineProps({
 
 const allCountries = ref([]);
 const selectedCountries = ref([]);
-
-// Computed property to get forest data from the store
 const forestData = computed(() => store.getForestCarbon);
 
-// Select all countries
 function selectAllCountries() {
   allCountries.value = [...new Set(forestData.value.map(d => d.Country))].sort();
   selectedCountries.value = [...allCountries.value];
 }
 
-// Deselect all countries and clear the plot
 function deselectAllCountries() {
   selectedCountries.value = [];
   updateForestPlot(props.selectedYear);
 }
 
-// Update the bar chart for the selected year and countries
 function updateForestPlot(year) {
   d3.select('#plot-area').selectAll('*').remove();
   const forestWidth = 600;
@@ -75,11 +70,10 @@ function updateForestPlot(year) {
     .append('g')
     .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-  // Create a tooltip div outside of the SVG
-  let tooltip = d3.select('#forest-container').select('.tooltip');
+  let tooltip = d3.select('body').select('.tooltip');
 
   if (tooltip.empty()) {
-    tooltip = d3.select('#forest-container')
+    tooltip = d3.select('body')
       .append('div')
       .attr('class', 'tooltip')
       .style('position', 'absolute')
@@ -92,7 +86,6 @@ function updateForestPlot(year) {
       .style('z-index', '10');
   }
 
-  // Prepare the data for the selected year and countries
   const filteredData = forestData.value
     .filter(d => selectedCountries.value.includes(d.Country) && d.Indicator === 'Forest area')
     .map(d => ({
@@ -110,7 +103,6 @@ function updateForestPlot(year) {
     return;
   }
 
-  // Sort data by Forest_Area
   filteredData.sort((a, b) => b.Forest_Area - a.Forest_Area);
 
   const yScale = d3.scaleBand()
@@ -122,7 +114,6 @@ function updateForestPlot(year) {
     .domain([0, d3.max(filteredData, d => d.Forest_Area)])
     .range([0, forestWidth]);
 
-  // Draw bars
   svg.selectAll('.bar')
     .data(filteredData)
     .enter()
@@ -139,20 +130,19 @@ function updateForestPlot(year) {
       tooltip
         .style('opacity', 1)
         .html(`<strong>${d.Country}</strong><br>Forest Area: ${d.Forest_Area.toLocaleString()} HA`)
-        .style('left', (event.pageX + 15) + 'px')
-        .style('top', (event.pageY + 15) + 'px');
+        .style('left', `${event.pageX + 15}px`)
+        .style('top', `${event.pageY + 15}px`);
     })
     .on('mousemove', function (event) {
       tooltip
-        .style('left', (event.pageX + 15) + 'px')
-        .style('top', (event.pageY + 15) + 'px');
+        .style('left', `${event.pageX + 15}px`)
+        .style('top', `${event.pageY + 15}px`);
     })
     .on('mouseout', function () {
       d3.select(this).attr('fill', 'steelblue');
       tooltip.style('opacity', 0);
     });
 
-  // Add axes
   svg.append('g')
     .call(d3.axisLeft(yScale).tickSize(0).tickPadding(10));
   
@@ -160,7 +150,6 @@ function updateForestPlot(year) {
     .attr('transform', `translate(0, ${forestHeight})`)
     .call(d3.axisBottom(xScale));
 
-  // Add titles
   svg.append('text')
     .attr('x', forestWidth / 2)
     .attr('y', -20)
@@ -169,17 +158,14 @@ function updateForestPlot(year) {
     .text(`Forest Area in ${year}`);
 }
 
-// Watch for year changes and update the plot
 watch(() => props.selectedYear, (newYear) => {
   updateForestPlot(newYear);
 });
 
-// Watch for country selections and update the plot
 watch(selectedCountries, () => {
   updateForestPlot(props.selectedYear);
 });
 
-// Load data when the component mounts
 onMounted(async () => {
   if (store.getForestCarbon.length === 0) {
     await store.loadData();
@@ -194,6 +180,8 @@ onMounted(async () => {
   width: 800px;
   margin: 20px auto;
   text-align: center;
+  position: relative;
+  overflow: hidden;
 }
 
 .controls {
@@ -230,5 +218,24 @@ onMounted(async () => {
 
 .checkbox-label input {
   margin-right: 10px;
+}
+
+#plot-area {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.tooltip {
+  font-size: 14px;
+  line-height: 1.5;
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  background: white;
+  border: 1px solid black;
+  padding: 5px;
+  border-radius: 5px;
+  z-index: 10;
 }
 </style>
