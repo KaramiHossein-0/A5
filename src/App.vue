@@ -13,8 +13,8 @@
     </div>
     <div id="content-wrapper">
       <div class="row">
-        <DisasterMap :selectedYear="selectedYear" />
-        <CarbonDeforestationPlot :selectedYear="selectedYear" />
+        <DisasterMap @country-selected="handleCountrySelected" :selectedYear="selectedYear" />
+        <CarbonDeforestationPlot :selectedYear="selectedYear" :selectedCountry="selectedCountry" />
       </div>
       <div class="row">
         <ForestCarbonPlot :selectedYear="selectedYear" />
@@ -32,6 +32,11 @@ import ForestCarbonPlot from './components/ForestCarbonPlot.vue';
 import CarbonDeforestationPlot from './components/CarbonDeforestationPlot.vue';
 import DisasterFrequencyPlot from '@/components/DisasterFrequencyPlot.vue';
 const selectedYear = ref(2023);
+const selectedCountry = ref(null);
+
+function handleCountrySelected(iso3) {
+  selectedCountry.value = iso3;
+}
 </script>
 <style>
 #app {

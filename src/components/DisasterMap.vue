@@ -9,9 +9,10 @@
 </template>
 
 <script setup>
-import { onMounted, watch, computed } from 'vue';
+import { onMounted, watch, computed, ref } from 'vue';
 import * as d3 from 'd3';
 import { useStore } from '@/stores/store'; // Adjust the import path as needed
+import { defineEmits } from 'vue';
 
 // Use the store
 const store = useStore();
@@ -28,6 +29,9 @@ const geoData = computed(() => store.getGeoData);
 let svg, colorScale, projection, pathGenerator;
 const width = 600;
 const height = 400;
+
+const emit = defineEmits(['country-selected']);
+const selectedCountry = ref(null);
 
 // Initialize the map
 function initializeMap() {
@@ -46,6 +50,12 @@ function initializeMap() {
     .domain([1, 100]); // Adjust domain based on your data range
 
   createLegend();
+
+  svg.on('click', (event) => {
+    if (event.target.tagName !== 'path') {
+      removeHighlight();
+    }
+  });
 }
 
 // Update the map with disaster data for the selected year
@@ -72,8 +82,8 @@ function updateMap(year) {
       const countryData = yearData.find(c => c.iso3 === d.properties.ISO_A3);
       return countryData && countryData.frequency > 0 ? colorScale(countryData.frequency) : '#ccc';
     })
-    .attr('stroke', '#fff')
-    .attr('stroke-width', 0.5)
+    .attr('stroke', d => selectedCountry.value === d.properties.ISO_A3 ? 'red' : '#fff')
+    .attr('stroke-width', d => selectedCountry.value === d.properties.ISO_A3 ? 2 : 0.5)
     .on('mouseover', (event, d) => {
       const countryData = yearData.find(c => c.iso3 === d.properties.ISO_A3);
       const frequency = countryData ? countryData.frequency : 'No data';
@@ -91,7 +101,19 @@ function updateMap(year) {
     })
     .on('mouseout', () => {
       tooltip.style('opacity', 0);
+    })
+    .on('click', (event, d) => {
+      const countryData = yearData.find(c => c.iso3 === d.properties.ISO_A3);
+      if (countryData) {
+        selectedCountry.value = countryData.iso3;
+        emit('country-selected', countryData.iso3);
+      }
     });
+}
+
+function removeHighlight() {
+  selectedCountry.value = null;
+  svg.selectAll('path').attr('stroke-width', 0.5);
 }
 
 // Create the legend for the color scale
@@ -152,6 +174,11 @@ function createLegend() {
 // Watch for year changes and update the map
 watch(() => props.selectedYear, (newYear) => {
   updateMap(newYear);
+});
+
+// Watch for selected country changes and update the map
+watch(selectedCountry, () => {
+  updateMap(props.selectedYear);
 });
 
 // Load data and initialize map on mount

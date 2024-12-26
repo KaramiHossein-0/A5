@@ -11,7 +11,8 @@ import * as d3 from 'd3';
 import { useStore } from '@/stores/store';
 
 const props = defineProps({
-  selectedYear: Number
+  selectedYear: Number,
+  selectedCountry: String
 });
 
 const store = useStore();
@@ -21,6 +22,10 @@ let xScale, yScale, sizeScale, xAxisGroup, yAxisGroup, pointsGroup, brushGroup, 
 
 watch(() => props.selectedYear, (newYear) => {
   drawScatterPlot(processForestAndCarbonData(), newYear);
+});
+
+watch(() => props.selectedCountry, (newCountry) => {
+  highlightCountry(newCountry);
 });
 
 function processForestAndCarbonData() {
@@ -186,11 +191,31 @@ function drawScatterPlot(data, year) {
   });
 }
 
+function highlightCountry(iso3) {
+  pointsGroup.selectAll('circle')
+    .attr('stroke', d => d.ISO3 === iso3 ? 'red' : 'none')
+    .attr('stroke-width', d => d.ISO3 === iso3 ? 3 : 0);
+}
+
+// Add this function to remove highlights
+function removeHighlight() {
+  pointsGroup.selectAll('circle')
+    .attr('stroke', 'none')
+    .attr('stroke-width', 0);
+}
+
 onMounted(async () => {
   if (store.getForestCarbon.length === 0) {
     await store.loadData();
   }
   drawScatterPlot(processForestAndCarbonData(), props.selectedYear);
+
+  // Add event listener to remove highlight when clicking outside the map
+  d3.select('#scatter-plot-area').on('click', (event) => {
+    if (event.target.tagName !== 'circle') {
+      removeHighlight();
+    }
+  });
 });
 </script>
 

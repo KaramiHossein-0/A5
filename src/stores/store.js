@@ -24,9 +24,7 @@ export const useStore = defineStore({
     changeSelectedYear(year) {
       this.selectedYear = year;
     },
-    // changeSelectedState(state) {
-    //   this.selectedStates.push(state);
-    // },
+
   },
 
   getters: {
