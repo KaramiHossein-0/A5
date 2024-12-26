@@ -59,9 +59,9 @@ function deselectAllCountries() {
 
 function updateForestPlot(year) {
   d3.select('#plot-area').selectAll('*').remove();
-  const forestWidth = 600;
-  const forestHeight = 800;
-  const margin = { top: 50, right: 50, bottom: 50, left: 150 };
+  const forestWidth = 800; // Adjusted width
+  const forestHeight = 600; // Adjusted height
+  const margin = { top: 50, right: 50, bottom: 150, left: 50 }; // Adjusted margins
 
   const svg = d3.select('#plot-area')
     .append('svg')
@@ -105,24 +105,24 @@ function updateForestPlot(year) {
 
   filteredData.sort((a, b) => b.Forest_Area - a.Forest_Area);
 
-  const yScale = d3.scaleBand()
-    .domain(filteredData.map(d => d.Country))
-    .range([0, forestHeight])
-    .padding(0.1);
-
-  const xScale = d3.scaleLinear()
+  const yScale = d3.scaleLinear()
     .domain([0, d3.max(filteredData, d => d.Forest_Area)])
-    .range([0, forestWidth]);
+    .range([forestHeight, 0]);
+
+  const xScale = d3.scaleBand()
+    .domain(filteredData.map(d => d.Country))
+    .range([0, forestWidth])
+    .padding(0.1);
 
   svg.selectAll('.bar')
     .data(filteredData)
     .enter()
     .append('rect')
     .attr('class', 'bar')
-    .attr('x', 0)
-    .attr('y', d => yScale(d.Country))
-    .attr('width', d => xScale(d.Forest_Area))
-    .attr('height', yScale.bandwidth())
+    .attr('x', d => xScale(d.Country))
+    .attr('y', d => yScale(d.Forest_Area))
+    .attr('width', xScale.bandwidth())
+    .attr('height', d => forestHeight - yScale(d.Forest_Area))
     .attr('fill', 'steelblue')
     .on('mouseover', function (event, d) {
       d3.select(this).attr('fill', 'orange');
@@ -144,15 +144,18 @@ function updateForestPlot(year) {
     });
 
   svg.append('g')
-    .call(d3.axisLeft(yScale).tickSize(0).tickPadding(10));
+    .call(d3.axisLeft(yScale));
   
   svg.append('g')
     .attr('transform', `translate(0, ${forestHeight})`)
-    .call(d3.axisBottom(xScale));
+    .call(d3.axisBottom(xScale).tickSize(0).tickPadding(10))
+    .selectAll("text")
+    .attr("transform", "rotate(-45)")
+    .style("text-anchor", "end");
 
   svg.append('text')
     .attr('x', forestWidth / 2)
-    .attr('y', -20)
+    .attr('y', forestHeight + margin.bottom - 10)
     .attr('text-anchor', 'middle')
     .style('font-size', '18px')
     .text(`Forest Area in ${year}`);

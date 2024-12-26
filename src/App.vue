@@ -12,10 +12,16 @@
       />
     </div>
     <div id="content-wrapper">
-      <DisasterMap :selectedYear="selectedYear" />
-      <ForestCarbonPlot :selectedYear="selectedYear" />
-      <CarbonDeforestationPlot :selectedYear="selectedYear" />
-      <DisasterFrequencyPlot />
+      <div class="row">
+        <DisasterMap :selectedYear="selectedYear" />
+        <CarbonDeforestationPlot :selectedYear="selectedYear" />
+      </div>
+      <div class="row">
+        <ForestCarbonPlot :selectedYear="selectedYear" />
+      </div>
+      <div class="row">
+        <DisasterFrequencyPlot />
+      </div>
     </div>
   </div>
 </template>
@@ -37,11 +43,16 @@ const selectedYear = ref(2023);
 }
 #content-wrapper {
   display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 20px;
   margin-top: 20px;
 }
-#content-wrapper > * {
+.row {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+.row > * {
   flex: 1;
   min-width: 600px;
   margin: 20px;
