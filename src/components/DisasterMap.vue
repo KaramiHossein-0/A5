@@ -30,7 +30,7 @@ let svg, colorScale, projection, pathGenerator;
 const width = 600;
 const height = 400;
 
-const emit = defineEmits(['country-selected']);
+const emit = defineEmits(['country-selected', 'remove-highlight']);
 const selectedCountry = ref(null);
 
 // Initialize the map
@@ -54,6 +54,7 @@ function initializeMap() {
   svg.on('click', (event) => {
     if (event.target.tagName !== 'path') {
       removeHighlight();
+      emit('remove-highlight');
     }
   });
 }

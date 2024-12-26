@@ -13,8 +13,8 @@
     </div>
     <div id="content-wrapper">
       <div class="row">
-        <DisasterMap @country-selected="handleCountrySelected" :selectedYear="selectedYear" />
-        <CarbonDeforestationPlot :selectedYear="selectedYear" :selectedCountry="selectedCountry" />
+        <DisasterMap @country-selected="handleCountrySelected" :selectedYear="selectedYear" @remove-highlight="handleRemoveHighlight" />
+        <CarbonDeforestationPlot :selectedYear="selectedYear" :selectedCountry="selectedCountry" @remove-highlight="handleRemoveHighlight" />
       </div>
       <div class="row">
         <ForestCarbonPlot :selectedYear="selectedYear" />
@@ -36,6 +36,10 @@ const selectedCountry = ref(null);
 
 function handleCountrySelected(iso3) {
   selectedCountry.value = iso3;
+}
+
+function handleRemoveHighlight() {
+  selectedCountry.value = null;
 }
 </script>
 <style>

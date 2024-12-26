@@ -2,6 +2,7 @@
   <div id="carbon-deforestation-container">
     <h3>Carbon Sequestration vs. Deforestation Rate (Year: {{ selectedYear }})</h3>
     <div id="scatter-plot-area" class="relative"></div>
+    <div v-if="noData" class="no-data-message">No data available for the selected year</div>
   </div>
 </template>
 
@@ -16,6 +17,9 @@ const props = defineProps({
 });
 
 const store = useStore();
+
+const emit = defineEmits(['remove-highlight']);
+const noData = ref(false);
 
 // Keep track of scales and groups globally
 let xScale, yScale, sizeScale, xAxisGroup, yAxisGroup, pointsGroup, brushGroup, svg;
@@ -88,6 +92,12 @@ function drawScatterPlot(data, year) {
     .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
   const filteredData = data.filter(d => d.Year === year && d.Deforestation_Rate !== null && d.Carbon_Stocks !== null);
+
+  noData.value = filteredData.length === 0;
+
+  if (noData.value) {
+    return;
+  }
 
   const xDomain = d3.extent(filteredData, d => d.Deforestation_Rate);
   const yDomain = d3.extent(filteredData, d => d.Carbon_Stocks);
@@ -214,6 +224,7 @@ onMounted(async () => {
   d3.select('#scatter-plot-area').on('click', (event) => {
     if (event.target.tagName !== 'circle') {
       removeHighlight();
+      emit('remove-highlight');
     }
   });
 });
@@ -228,5 +239,11 @@ onMounted(async () => {
 
 .tooltip {
   z-index: 1000;
+}
+
+.no-data-message {
+  color: red;
+  font-weight: bold;
+  margin-top: 20px;
 }
 </style>
