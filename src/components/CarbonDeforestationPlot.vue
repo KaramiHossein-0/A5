@@ -185,7 +185,13 @@ function drawScatterPlot(data, year) {
     pointsGroup.selectAll('circle')
       .transition().duration(500)
       .attr('cx', d => xScale(d.Deforestation_Rate))
-      .attr('cy', d => yScale(d.Carbon_Stocks));
+      .attr('cy', d => yScale(d.Carbon_Stocks))
+      .attr('r', d => sizeScale(d.Forest_Area))
+      .attr('opacity', d => {
+        const x = xScale(d.Deforestation_Rate);
+        const y = yScale(d.Carbon_Stocks);
+        return (x >= 0 && x <= width && y >= 0 && y <= height) ? 0.7 : 0;
+      });
     brushGroup.call(brush.move, null);
   }
 
@@ -197,7 +203,9 @@ function drawScatterPlot(data, year) {
     pointsGroup.selectAll('circle')
       .transition().duration(500)
       .attr('cx', d => xScale(d.Deforestation_Rate))
-      .attr('cy', d => yScale(d.Carbon_Stocks));
+      .attr('cy', d => yScale(d.Carbon_Stocks))
+      .attr('r', d => sizeScale(d.Forest_Area))
+      .attr('opacity', 0.7);
   });
 }
 
