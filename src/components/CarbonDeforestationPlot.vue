@@ -212,6 +212,10 @@ function removeHighlight() {
   pointsGroup.selectAll('circle')
     .attr('stroke', 'none')
     .attr('stroke-width', 0);
+
+  // Emit the remove-highlight event on the document
+  const event = new Event('remove-highlight');
+  document.dispatchEvent(event);
 }
 
 onMounted(async () => {
@@ -227,6 +231,14 @@ onMounted(async () => {
       emit('remove-highlight');
     }
   });
+
+  // Remove the event listener added to the document
+  // document.addEventListener('click', (event) => {
+  //   if (!event.target.closest('#scatter-plot-area')) {
+  //     removeHighlight();
+  //     emit('remove-highlight');
+  //   }
+  // });
 });
 </script>
 

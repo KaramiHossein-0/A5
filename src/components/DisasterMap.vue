@@ -57,6 +57,14 @@ function initializeMap() {
       emit('remove-highlight');
     }
   });
+
+  // Remove the event listener added to the document
+  // document.addEventListener('click', (event) => {
+  //   if (!event.target.closest('#map-container')) {
+  //     removeHighlight();
+  //     emit('remove-highlight');
+  //   }
+  // });
 }
 
 // Update the map with disaster data for the selected year
@@ -189,6 +197,11 @@ onMounted(async () => {
   }
   initializeMap();
   updateMap(props.selectedYear);
+
+  // Listen for the remove-highlight event
+  document.addEventListener('remove-highlight', () => {
+    removeHighlight();
+  });
 });
 </script>
 
