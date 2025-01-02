@@ -62,6 +62,12 @@ function drawDisasterChart() {
     return;
   }
 
+  // Initially hide all traces
+  traces.forEach(trace => {
+    trace.visible = 'legendonly';
+    // trace.hoverinfo = 'x+y+name'; // Remove mouse hover for lines
+  });
+
   const layout = {
     title: 'Climate-Related Disaster Frequency by Country (1980-2023)',
     xaxis: {
