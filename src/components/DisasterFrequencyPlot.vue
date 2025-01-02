@@ -133,13 +133,36 @@ const createChart = (data) => {
       .attr("height", height);
 
   groupedData.forEach((countryData, country) => {
-    mainChart.append("path")
+    const path = mainChart.append("path")
       .datum(countryData)
       .attr("class", "line")
       .attr("fill", "none")
       .attr("stroke", colorScale(country))
       .attr("stroke-width", 1.5)
       .attr("d", line);
+
+    path.on("mouseover", function(event) {
+        d3.select(this)
+          .attr("stroke-width", 3)
+          .attr("stroke", "black");
+
+        svg.append("text")
+          .attr("id", "country-label")
+          .attr("x", d3.pointer(event)[0] + 10)
+          .attr("y", d3.pointer(event)[1] - 10)
+          .attr("text-anchor", "start")
+          .attr("font-size", "12px")
+          .attr("font-weight", "bold")
+          .attr("fill", "black")
+          .text(country);
+      })
+      .on("mouseout", function() {
+        d3.select(this)
+          .attr("stroke-width", 1.5)
+          .attr("stroke", colorScale(country));
+
+        svg.select("#country-label").remove();
+      });
   });
 
   const context = svg.append("g")
