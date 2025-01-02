@@ -2,7 +2,7 @@
 # Vis-Vue-D3 Project
 
 ## Introduction
-**Vis-Vue-D3** is a Vue.js-based web application that leverages D3.js and Plotly for visualizing climate and environmental data. The project provides dynamic, interactive visualizations to analyze forest carbon stocks, climate-related disaster frequencies, and other key environmental indicators.
+**Vis-Vue-D3** is a Vue.js-based web application that leverages D3.js for visualizing climate and environmental data. The project provides dynamic, interactive visualizations to analyze forest carbon stocks, climate-related disaster frequencies, and other key environmental indicators.
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -19,7 +19,7 @@
 - [License](#license)
 
 ## Features
-- Interactive D3.js and Plotly-based visualizations.
+- Interactive D3.js-based visualizations.
 - Climate data analysis including forest carbon stocks and disaster frequencies.
 - Responsive and modular Vue.js components.
 - Slider-based temporal analysis.
