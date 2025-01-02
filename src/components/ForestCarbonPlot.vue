@@ -61,7 +61,7 @@ function updateForestPlot(year) {
   d3.select('#plot-area').selectAll('*').remove();
   const forestWidth = 800; // Adjusted width
   const forestHeight = 600; // Adjusted height
-  const margin = { top: 50, right: 50, bottom: 150, left: 50 }; // Adjusted margins
+  const margin = { top: 50, right: 50, bottom: 150, left: 70 }; // Adjusted margins
 
   const svg = d3.select('#plot-area')
     .append('svg')
@@ -159,6 +159,21 @@ function updateForestPlot(year) {
     .attr('text-anchor', 'middle')
     .style('font-size', '18px')
     .text(`Forest Area in ${year}`);
+
+  svg.append('text')
+    .attr('transform', 'rotate(-90)')
+    .attr('y', -margin.left - 5)
+    .attr('x', -forestHeight  / 2)
+    .attr('dy', '1em')
+    .style('text-anchor', 'middle')
+    .text('Forest Area (HA)');
+
+  svg.append('text')
+    .attr('x', forestWidth / 2)
+    .attr('y', forestHeight + margin.bottom - 50)
+    .attr('text-anchor', 'middle')
+    .style('font-size', '18px')
+    .text('Country');
 }
 
 watch(() => props.selectedYear, (newYear) => {
